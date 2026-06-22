@@ -1893,6 +1893,15 @@ def test_fraction_validation():
         {'type': 'fraction_parsing', 'loc': ('a',), 'msg': 'Input is not a valid fraction', 'input': 'wrong_format'}
     ]
 
+    # Zero denominator: fractions.Fraction raises ZeroDivisionError,
+    # but the validator should still surface a pydantic.ValidationError.
+    # See pydantic#13257.
+    with pytest.raises(ValidationError) as exc_info:
+        Model(a='6/0')
+    assert exc_info.value.errors(include_url=False) == [
+        {'type': 'fraction_parsing', 'loc': ('a',), 'msg': 'Input is not a valid fraction', 'input': '6/0'}
+    ]
+
 
 @pytest.mark.skipif(not email_validator, reason='email_validator not installed')
 def test_string_success():
